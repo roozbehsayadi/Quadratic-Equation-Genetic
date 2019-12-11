@@ -5,12 +5,14 @@
 #include <vector>
 #include <math.h>
 #include <algorithm>
+#include <random>
 
 const int DOTS_COUNT = 1000;
 const int POPULATION = 100;
 const int GENERATION_COUNT = 100;
 
 const double MUTATION_PROBABILITY = 0.1;
+const int MAX_BITS_TO_CHANGE = 6;
 
 namespace utilities { 
 
@@ -168,16 +170,55 @@ std::vector<Coefficient> crossOver( const Coefficient &c1, const Coefficient &c2
 
 }
 
+void mutateDouble( double &a ) {
+	std::string s = utilities::doubleToBinaryString( a );
+	double probability = (double) rand() / RAND_MAX;
+	if ( probability < MUTATION_PROBABILITY ) {
+
+		std::random_device rd;
+		std::mt19937 g(rd());
+
+		int numbers[64];
+		for ( int i = 0; i < 64; i++ ) 
+			numbers[i] = i;
+		std::shuffle( numbers, numbers + 64, g );
+		int bitsToMutate = rand() % MAX_BITS_TO_CHANGE + 1;
+		for ( int i = 0; i < bitsToMutate; i++ )
+			s[ numbers[i] ] = '1' - s[ numbers[i] ] + '0';
+		//std::cout << "String: " << s << std::endl;
+		try {
+			a = utilities::binaryStringToDouble( s );
+		}
+		catch ( std::out_of_range ){
+			s[0] = '0';
+			a = utilities::binaryStringToDouble( s );
+		}
+	}
+}
+
+void mutateCoefficient( Coefficient &c ) {
+	mutateDouble( c.a );
+	mutateDouble( c.b );
+	mutateDouble( c.c );
+}
+
 void crossOver() { 
 
 	size_t initialPopulation = coefficients.size();
 	for ( unsigned int i = 0; i < initialPopulation; i += 2 ) { 
-		std::cout << "About to crossover " << i << ' ' << "and" << ' ' << i + 1 << std::endl;
+		//std::cout << "About to crossover " << i << ' ' << "and" << ' ' << i + 1 << std::endl;
 		auto childsTemp = crossOver( coefficients[i], coefficients[i+1] );
+		for ( unsigned int j = 0; j < childsTemp.size(); j++ )
+			mutateCoefficient( childsTemp[j] );
+		//for_each( childsTemp.begin(), childsTemp.end(), mutateCoefficient );
 		coefficients.insert( coefficients.end(), childsTemp.begin(), childsTemp.end() );
 		//std::cout << "Pop size: " << coefficients.size() << std::endl;
 	}
 
+}
+
+void dropOff() { 
+	coefficients.erase( coefficients.begin() + ( coefficients.size() / 2 ), coefficients.end() );
 }
 
 void sortPopulation() { 
@@ -203,9 +244,12 @@ int main () {
 
 		crossOver();
 		sortPopulation();
-//		dropOff();
+		dropOff();
 
 	}
+
+	//std::cout << "Answer: " << coefficients[0] << std::endl;
+	system( ( "python3 plotter.py " + std::to_string( coefficients[0].a ) + " " + std::to_string( coefficients[0].b ) + " " + std::to_string( coefficients[0].c ) ).c_str() );
 
 	return 0;
 
