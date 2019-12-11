@@ -135,13 +135,13 @@ int compareLoss( const Coefficient &c1, const Coefficient &c2 ) {
 }
 
 std::vector<double> crossOver( double a1, double a2, int slicePosition ) { 
-	std::cout << "a1, a2: " << a1 << ' ' << a2 << std::endl;
+	//std::cout << "a1, a2: " << a1 << ' ' << a2 << std::endl;
 	std::string a1String = utilities::doubleToBinaryString( a1 );
 	std::string a2String = utilities::doubleToBinaryString( a2 );
 	std::vector<double> returnValue( 2 );
-	std::cout << "Slice Position: " << slicePosition << std::endl;
-	std::cout << a1String << "        " << a2String << std::endl;
-	std::cout << a1String.substr( 0, slicePosition ) + a2String.substr( slicePosition, std::string::npos ) << "        " << a2String.substr( 0, slicePosition ) + a1String.substr( slicePosition, std::string::npos ) << std::endl;
+	//std::cout << "Slice Position: " << slicePosition << std::endl;
+	//std::cout << a1String << "        " << a2String << std::endl;
+	//std::cout << a1String.substr( 0, slicePosition ) + a2String.substr( slicePosition, std::string::npos ) << "        " << a2String.substr( 0, slicePosition ) + a1String.substr( slicePosition, std::string::npos ) << std::endl;
 	returnValue[0] = utilities::binaryStringToDouble( a1String.substr( 0, slicePosition ) + a2String.substr( slicePosition, std::string::npos ) );
 	returnValue[1] = utilities::binaryStringToDouble( a2String.substr( 0, slicePosition ) + a1String.substr( slicePosition, std::string::npos ) );
 	return returnValue;
@@ -163,7 +163,7 @@ std::vector<Coefficient> crossOver( const Coefficient &c1, const Coefficient &c2
 	child1.c = temp[0], child2.c = temp[1];
 
 	std::vector<Coefficient> returnValue( 2 );
-	returnValue[1] = child1; returnValue[2] = child2;
+	returnValue[0] = child1; returnValue[1] = child2;
 	return returnValue;
 
 }
@@ -172,9 +172,10 @@ void crossOver() {
 
 	size_t initialPopulation = coefficients.size();
 	for ( unsigned int i = 0; i < initialPopulation; i += 2 ) { 
+		std::cout << "About to crossover " << i << ' ' << "and" << ' ' << i + 1 << std::endl;
 		auto childsTemp = crossOver( coefficients[i], coefficients[i+1] );
 		coefficients.insert( coefficients.end(), childsTemp.begin(), childsTemp.end() );
-		std::cout << "Pop size: " << coefficients.size() << std::endl;
+		//std::cout << "Pop size: " << coefficients.size() << std::endl;
 	}
 
 }
