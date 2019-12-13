@@ -7,14 +7,14 @@
 #include <algorithm>
 #include <random>
 
-const int DOTS_COUNT = 1000;
-const int POPULATION = 100;
-const int GENERATION_COUNT = 100;
+const int DOTS_COUNT = 1000;	// Number of inputs
+const int POPULATION = 100;		// Number of population per generation
+const int GENERATION_COUNT = 1000;	// Number of generations
 
-const double MUTATION_PROBABILITY = 0.1;
-const int MAX_BITS_TO_CHANGE = 6;
+const double MUTATION_PROBABILITY = 0.2;
+const int MAX_BITS_TO_CHANGE = 3;	// How many bits can a mutation change? 
 
-const std::string FITNESS_FLOW_FILENAME = "fitness_flow";
+const std::string FITNESS_FLOW_FILENAME = "fitness_flow";	// We print the best fitness of each generation in this file, if user wants.
 std::ofstream fitness_out;
 
 namespace utilities { 
@@ -118,8 +118,8 @@ void generateFirstPopulation() {
 
 double costFunction( const Coefficient &c ) { 
 	double returnValue = 0;
-	for ( unsigned int i = 0; i < coefficients.size(); i++ ) 
-		returnValue += pow( trainPoints[i].y - f( c, trainPoints[i].x ), 2 );
+	for ( unsigned int i = 0; i < DOTS_COUNT; i++ ) 
+		returnValue += pow( trainPoints[i].y - f( c, trainPoints[i].x ), 2 ) / 100;
 	return returnValue;
 }
 
@@ -157,17 +157,31 @@ std::vector<double> crossOver( double a1, double a2, int slicePosition ) {
 std::vector<Coefficient> crossOver( const Coefficient &c1, const Coefficient &c2 ) { 
 
 	Coefficient child1, child2;
-	int slicePosition = rand() % 63 + 1;
-	auto temp = crossOver( c1.a, c2.a, slicePosition );
-	child1.a = temp[0]; child2.a = temp[1];
 
-	slicePosition = rand() % 63 + 1;
-	temp = crossOver( c1.b, c2.b, slicePosition );
-	child1.b = temp[0]; child2.b = temp[1];
+	int crossoverBoundaries = rand() % 3;
+	if ( crossoverBoundaries == 0 ) {
+		child1.a = c1.a; child1.b = c1.b; child1.c = c2.c;
+		child2.a = c2.a; child2.b = c2.b; child2.c = c1.c;
+	}
+	else if ( crossoverBoundaries == 1 ) {
+		child1.a = c1.a; child1.b = c2.b; child1.c = c1.c;
+		child2.a = c2.a; child2.b = c1.b; child2.c = c2.c;
+	}
+	else {
+		child1.a = c2.a; child1.b = c1.b; child1.c = c1.c;
+		child2.a = c1.a; child2.b = c2.b; child2.c = c2.c;
+	}
+	// int slicePosition = rand() % 63 + 1;
+	// auto temp = crossOver( c1.a, c2.a, slicePosition );
+	// child1.a = temp[0]; child2.a = temp[1];
 
-	slicePosition = rand() % 63 + 1;
-	temp = crossOver( c1.c, c2.c, slicePosition );
-	child1.c = temp[0], child2.c = temp[1];
+	// slicePosition = rand() % 63 + 1;
+	// temp = crossOver( c1.b, c2.b, slicePosition );
+	// child1.b = temp[0]; child2.b = temp[1];
+
+	// slicePosition = rand() % 63 + 1;
+	// temp = crossOver( c1.c, c2.c, slicePosition );
+	// child1.c = temp[0], child2.c = temp[1];
 
 	std::vector<Coefficient> returnValue( 2 );
 	returnValue[0] = child1; returnValue[1] = child2;
@@ -176,29 +190,33 @@ std::vector<Coefficient> crossOver( const Coefficient &c1, const Coefficient &c2
 }
 
 void mutateDouble( double &a ) {
-	std::string s = utilities::doubleToBinaryString( a );
+
 	double probability = (double) rand() / RAND_MAX;
-	if ( probability < MUTATION_PROBABILITY ) {
+	if ( probability <= MUTATION_PROBABILITY )
+		a = ( (double)rand() / RAND_MAX ) * 100 - 50;
+	// std::string s = utilities::doubleToBinaryString( a );
+	// double probability = (double) rand() / RAND_MAX;
+	// if ( probability < MUTATION_PROBABILITY ) {
 
-		std::random_device rd;
-		std::mt19937 g(rd());
+	// 	std::random_device rd;
+	// 	std::mt19937 g(rd());
 
-		int numbers[64];
-		for ( int i = 0; i < 64; i++ ) 
-			numbers[i] = i;
-		std::shuffle( numbers, numbers + 64, g );
-		int bitsToMutate = rand() % MAX_BITS_TO_CHANGE + 1;
-		for ( int i = 0; i < bitsToMutate; i++ )
-			s[ numbers[i] ] = '1' - s[ numbers[i] ] + '0';
-		//std::cout << "String: " << s << std::endl;
-		try {
-			a = utilities::binaryStringToDouble( s );
-		}
-		catch ( std::out_of_range ){
-			s[0] = '0';
-			a = utilities::binaryStringToDouble( s );
-		}
-	}
+	// 	int numbers[64];
+	// 	for ( int i = 0; i < 64; i++ ) 
+	// 		numbers[i] = i;
+	// 	std::shuffle( numbers, numbers + 64, g );
+	// 	int bitsToMutate = rand() % MAX_BITS_TO_CHANGE + 1;
+	// 	for ( int i = 0; i < bitsToMutate; i++ )
+	// 		s[ numbers[i] ] = '1' - s[ numbers[i] ] + '0';
+	// 	//std::cout << "String: " << s << std::endl;
+	// 	try {
+	// 		a = utilities::binaryStringToDouble( s );
+	// 	}
+	// 	catch ( std::out_of_range ){
+	// 		s[0] = '0';
+	// 		a = utilities::binaryStringToDouble( s );
+	// 	}
+	// }
 }
 
 void mutateCoefficient( Coefficient &c ) {
@@ -232,6 +250,9 @@ void sortPopulation() {
 
 void writeFitness() {
 	fitness_out << costFunction( *coefficients.begin() ) << std::endl;
+	// for ( unsigned int i = 0; i < coefficients.size(); i++ ) 
+	// 	fitness_out << costFunction( coefficients[i] ) << " ";
+	// fitness_out << std::endl;
 }
 
 int main ( int argc, char **argv ) {
