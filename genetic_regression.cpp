@@ -11,7 +11,7 @@ const int DOTS_COUNT = 1000;	// Number of inputs
 const int POPULATION = 100;		// Number of population per generation
 const int GENERATION_COUNT = 1000;	// Number of generations
 
-const double MUTATION_PROBABILITY = 0.2;
+const double MUTATION_PROBABILITY = 0.4;
 const int MAX_BITS_TO_CHANGE = 3;	// How many bits can a mutation change? 
 
 const std::string FITNESS_FLOW_FILENAME = "fitness_flow";	// We print the best fitness of each generation in this file, if user wants.
@@ -158,30 +158,15 @@ std::vector<Coefficient> crossOver( const Coefficient &c1, const Coefficient &c2
 
 	Coefficient child1, child2;
 
-	int crossoverBoundaries = rand() % 3;
-	if ( crossoverBoundaries == 0 ) {
-		child1.a = c1.a; child1.b = c1.b; child1.c = c2.c;
-		child2.a = c2.a; child2.b = c2.b; child2.c = c1.c;
-	}
-	else if ( crossoverBoundaries == 1 ) {
-		child1.a = c1.a; child1.b = c2.b; child1.c = c1.c;
-		child2.a = c2.a; child2.b = c1.b; child2.c = c2.c;
-	}
-	else {
-		child1.a = c2.a; child1.b = c1.b; child1.c = c1.c;
-		child2.a = c1.a; child2.b = c2.b; child2.c = c2.c;
-	}
-	// int slicePosition = rand() % 63 + 1;
-	// auto temp = crossOver( c1.a, c2.a, slicePosition );
-	// child1.a = temp[0]; child2.a = temp[1];
+	double weight1 = (double)rand() / RAND_MAX;
+	double weight2 = 1 - weight1;
+	child1.a = c1.a * weight1 + c2.a * weight2;
+	child1.b = c1.b * weight1 + c2.b * weight2;
+	child1.c = c1.c * weight1 + c2.c * weight2;
 
-	// slicePosition = rand() % 63 + 1;
-	// temp = crossOver( c1.b, c2.b, slicePosition );
-	// child1.b = temp[0]; child2.b = temp[1];
-
-	// slicePosition = rand() % 63 + 1;
-	// temp = crossOver( c1.c, c2.c, slicePosition );
-	// child1.c = temp[0], child2.c = temp[1];
+	child2.a = c1.a * weight2 + c2.a * weight1;
+	child2.b = c1.b * weight2 + c2.b * weight1;
+	child2.c = c1.c * weight2 + c2.c * weight1;
 
 	std::vector<Coefficient> returnValue( 2 );
 	returnValue[0] = child1; returnValue[1] = child2;
@@ -194,29 +179,7 @@ void mutateDouble( double &a ) {
 	double probability = (double) rand() / RAND_MAX;
 	if ( probability <= MUTATION_PROBABILITY )
 		a = ( (double)rand() / RAND_MAX ) * 100 - 50;
-	// std::string s = utilities::doubleToBinaryString( a );
-	// double probability = (double) rand() / RAND_MAX;
-	// if ( probability < MUTATION_PROBABILITY ) {
-
-	// 	std::random_device rd;
-	// 	std::mt19937 g(rd());
-
-	// 	int numbers[64];
-	// 	for ( int i = 0; i < 64; i++ ) 
-	// 		numbers[i] = i;
-	// 	std::shuffle( numbers, numbers + 64, g );
-	// 	int bitsToMutate = rand() % MAX_BITS_TO_CHANGE + 1;
-	// 	for ( int i = 0; i < bitsToMutate; i++ )
-	// 		s[ numbers[i] ] = '1' - s[ numbers[i] ] + '0';
-	// 	//std::cout << "String: " << s << std::endl;
-	// 	try {
-	// 		a = utilities::binaryStringToDouble( s );
-	// 	}
-	// 	catch ( std::out_of_range ){
-	// 		s[0] = '0';
-	// 		a = utilities::binaryStringToDouble( s );
-	// 	}
-	// }
+	
 }
 
 void mutateCoefficient( Coefficient &c ) {
