@@ -14,6 +14,9 @@ const int GENERATION_COUNT = 100;
 const double MUTATION_PROBABILITY = 0.1;
 const int MAX_BITS_TO_CHANGE = 6;
 
+const std::string FITNESS_FLOW_FILENAME = "fitness_flow";
+std::ofstream fitness_out;
+
 namespace utilities { 
 
 	union doubleBinary { 
@@ -81,6 +84,8 @@ std::ostream &operator<<( std::ostream &out, const Coefficient &c ) {
 
 std::vector<Point> trainPoints( DOTS_COUNT );
 std::vector<Coefficient> coefficients( POPULATION );
+
+bool printFitness;
 
 void readPoints() {
 	std::ifstream x_fin( "x_train.csv" );
@@ -225,7 +230,17 @@ void sortPopulation() {
 	sort( coefficients.begin(), coefficients.end(), compareLoss );
 }
 
-int main () {
+void writeFitness() {
+	fitness_out << costFunction( *coefficients.begin() ) << std::endl;
+}
+
+int main ( int argc, char **argv ) {
+
+	if ( argc == 2 && std::string(argv[1]) == "PRINT_FITNESS" )
+		printFitness = true;
+	
+	if ( printFitness ) 
+		fitness_out.open( FITNESS_FLOW_FILENAME );
 
 /*	std::cout << utilities::decimalToBinaryString( 4611484187377963200 ) << std::endl;
 	exit( 0 );*/
@@ -239,17 +254,24 @@ int main () {
 /*	printLosses();
 	exit( 0 );*/
 	sortPopulation();
+	if ( printFitness ) 
+		writeFitness();
 
 	for ( int i = 0; i < GENERATION_COUNT; i++ ) {
 
 		crossOver();
 		sortPopulation();
 		dropOff();
+		if ( printFitness) 
+			writeFitness();
 
 	}
 
-	//std::cout << "Answer: " << coefficients[0] << std::endl;
+	std::cout << "Answer: " << coefficients[0] << std::endl;
 	system( ( "python3 plotter.py " + std::to_string( coefficients[0].a ) + " " + std::to_string( coefficients[0].b ) + " " + std::to_string( coefficients[0].c ) ).c_str() );
+
+	if ( printFitness )
+		fitness_out.close();
 
 	return 0;
 
